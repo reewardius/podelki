@@ -10,7 +10,8 @@ python delete_falsepositives.py -j fuzz_results.json -o fuzz_output.txt -fp fp_d
 ```
 katana -u root.txt -ps -o katana.txt
 python sensitive.py
-httpx -l matches.txt -mc 200 -o sensitive.txt
+httpx -l sensitive_matches.txt -mc 200 -o sensitive.txt
+httpx -l juicypath_matches.txt -mc 200 -o juicypath.txt
 ```
 
 3. Second-Order Hijacking
