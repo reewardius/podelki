@@ -5,11 +5,11 @@ from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
 
 # Входной файл со списком сайтов
-input_file = "2102_subs.txt"
+input_file = "subs.txt"
 output_dir = "domains_output"
 
 # Количество потоков
-MAX_THREADS = 10
+MAX_THREADS = 20
 
 # Создаем папку для сохранения файлов
 os.makedirs(output_dir, exist_ok=True)
