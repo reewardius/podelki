@@ -9,7 +9,7 @@ juicy_output_file = "juicypath_matches.txt"
 pattern = re.compile(r'\b[^/\s]+\.(pem|key|pfx|p12|crt|cer|env|sql|bak|db|sqlite|mdb|ldf|mdf|cfg|config|yml|yaml|json|xml|log|ini|passwd|shadow|htpasswd|pgpass|ovpn|rdp|ps1|sh|bash_history|zsh_history|history|ssh|id_rsa|id_dsa|secrets|cred|credentials|token|backup|dump|dmp|swp|log.1|old|disabled|csv|xls|xlsx|tsv|gpg|asc|keystore|jks|pfx|p7b|p7c|crt|csr|der|pkcs12|sso|dat|cache|auth|sess|session|adb|firestore|ndjson|sqlite3|db3|db-wal|db-shm|psql|myd|myi|frm|ibd|parquet|feather|orc|avro|tar|gz|zip|rar|7z|tgz|pdf|bz2|xz|zst|bak1|bak2|old1|old2|log1|log2)\b', re.IGNORECASE)
 
 # Регулярка для интересных путей (включая JS и CSS файлы, исключаем их позже)
-juicy_pattern = re.compile(r'\b(admin|dashboard|login|register|sign-in|user|control-panel|console|config|setup|manage|cms|wp-admin|phpmyadmin)\b', re.IGNORECASE)
+juicy_pattern = re.compile(r'\b(admin|dashboard|register|user|panel|control|debug|console|config|setup|manage)\b', re.IGNORECASE)
 
 # Читаем файл и ищем совпадения
 matches = []
