@@ -6,7 +6,10 @@ sensitive_output_file = "sensitive_matches.txt"
 juicy_output_file = "juicypath_matches.txt"
 
 # Регулярка для чувствительных файлов
-pattern = re.compile(r'\b[^/\s]+\.(pem|key|pfx|p12|crt|cer|env|sql|bak|db|sqlite|mdb|ldf|mdf|cfg|config|yml|yaml|json|xml|log|ini|passwd|shadow|htpasswd|pgpass|ovpn|rdp|ps1|sh|bash_history|zsh_history|history|ssh|id_rsa|id_dsa|secrets|cred|credentials|token|backup|dump|dmp|swp|log.1|old|disabled|csv|xls|xlsx|tsv|gpg|asc|keystore|jks|pfx|p7b|p7c|crt|csr|der|pkcs12|sso|dat|cache|auth|sess|session|adb|firestore|ndjson|sqlite3|db3|db-wal|db-shm|psql|myd|myi|frm|ibd|parquet|feather|orc|avro|tar|gz|zip|rar|7z|tgz|pdf|bz2|xz|zst|bak1|bak2|old1|old2|log1|log2)\b', re.IGNORECASE)
+pattern = re.compile(
+    r'\b[^/\s]+\.(pem|key|pfx|p12|crt|cer|env|sql|bak|db|sqlite|mdb|ldf|mdf|cfg|config|yml|yaml|json|xml|log|ini|passwd|shadow|htpasswd|pgpass|ovpn|rdp|ps1|sh|bash_history|zsh_history|history|ssh|id_rsa|id_dsa|secrets|cred|credentials|token|backup|dump|dmp|swp|log1|log2|csv|xls|xlsx|tsv|gpg|asc|keystore|jks|pfx|p7b|p7c|crt|csr|der|pkcs12|sso|dat|cache|auth|sess|session|adb|firestore|ndjson|sqlite3|db3|db-wal|db-shm|psql|myd|myi|frm|ibd|parquet|feather|orc|avro|tar|gz|zip|rar|7z|tgz|pdf|bz2|xz|zst|bak1|bak2|old1|old2|log1|log2|xls|xml|xlsx|json|pdf|sql|doc|docx|pptx|txt|git|zip|tar\.gz|tgz|bak|7z|rar|log|cache|secret|db|backup|yml|gz|config|csv|yaml|md|md5|exe|dll|bin|ini|bat|sh|tar|deb|rpm|iso|img|env|apk|msi|dmg|tmp|crt|pem|key|pub|asc)\b',
+    re.IGNORECASE
+)
 
 # Регулярка для интересных путей (включая JS и CSS файлы, исключаем их позже)
 juicy_pattern = re.compile(r'\b(admin|dashboard|register|user|panel|control|debug|console|config|setup|manage)\b', re.IGNORECASE)
