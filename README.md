@@ -22,7 +22,8 @@ nuclei -l domains_output/full.txt -profile subdomain-takeovers -duc -nh
 ```
 
 4. URLEXTRACT
-Urlextract receives URLs via stdin and prints variations with different path levels.
+
+Urlextract is a simple tool developed in Go to test potential vulnerabilities in URL paths. 🌐 It progressively removes paths from a URL, leaving only the domain and generating variations with different directory depths..
 ```
 echo "https://example.com/dir1/dir2/dir3" | ./urlextract
 cat urls.txt | ./urlextract
