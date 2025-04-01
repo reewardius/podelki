@@ -20,3 +20,17 @@ subfinder -dL root.txt -all -silent -o subs.txt
 python links.py
 nuclei -l domains_output/full.txt -profile subdomain-takeovers -duc -nh
 ```
+
+4. URLEXTRACT
+Urlextract receives URLs via stdin and prints variations with different path levels.
+```
+echo "https://example.com/dir1/dir2/dir3" | ./urlextract
+cat urls.txt | ./urlextract
+```
+# Expected Outputs
+```
+https://example.com
+https://example.com/dir1/dir2/dir3
+https://example.com/dir1/dir2
+https://example.com/dir1
+```
