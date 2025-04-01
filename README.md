@@ -27,7 +27,7 @@ Urlextract receives URLs via stdin and prints variations with different path lev
 echo "https://example.com/dir1/dir2/dir3" | ./urlextract
 cat urls.txt | ./urlextract
 ```
-# Expected Outputs
+Expected Outputs
 ```
 https://example.com
 https://example.com/dir1/dir2/dir3
