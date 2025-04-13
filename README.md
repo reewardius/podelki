@@ -25,11 +25,18 @@ nuclei -l domains_output/full.txt -profile subdomain-takeovers -duc -nh
 
 Slicer is a simple tool developed in Python to test potential vulnerabilities in URL paths. 🌐 It progressively removes paths from a URL, leaving only the domain and generating variations with different directory depths..
 ```
-python slicer.py katana.txt slicer.txt
+python3 slicer.py katana.txt slicer; cat slicer*.txt > combined.txt
+nuclei -l slicer1.txt -itags config,exposure -s medium,high,critical -rl 1000 -c 100 -stats -si 60 -o nuclei_path_results.txt
+nuclei -l combined.txt -itags config,exposure -s medium,high,critical -rl 1000 -c 100 -stats -si 60 -o nuclei_path_results.txt
 ```
-Expected Outputs
+Expected Output
 ```
-https://example.com/dir1/dir2/dir3
-https://example.com/dir1/dir2
-https://example.com/dir1
+✓ Extracted 923 unique paths at depth 1
+→ Saved to: slicer1.txt
+✓ Extracted 807 unique paths at depth 2
+→ Saved to: slicer2.txt
+✓ Extracted 717 unique paths at depth 3
+→ Saved to: slicer3.txt
+✓ Extracted 92 unique paths at depth 4
+→ Saved to: slicer4.txt
 ```
