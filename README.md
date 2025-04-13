@@ -21,16 +21,14 @@ python links.py
 nuclei -l domains_output/full.txt -profile subdomain-takeovers -duc -nh
 ```
 
-4. URLEXTRACT
+4. Slicer
 
-Urlextract is a simple tool developed in Go to test potential vulnerabilities in URL paths. 🌐 It progressively removes paths from a URL, leaving only the domain and generating variations with different directory depths..
+Slicer is a simple tool developed in Python to test potential vulnerabilities in URL paths. 🌐 It progressively removes paths from a URL, leaving only the domain and generating variations with different directory depths..
 ```
-echo "https://example.com/dir1/dir2/dir3" | ./urlextract
-cat urls.txt | ./urlextract
+python slicer.py katana.txt slicer.txt
 ```
 Expected Outputs
 ```
-https://example.com
 https://example.com/dir1/dir2/dir3
 https://example.com/dir1/dir2
 https://example.com/dir1
