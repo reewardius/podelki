@@ -41,7 +41,7 @@ Expected Output
 ✓ Extracted 92 unique paths at depth 4
 → Saved to: slicer4.txt
 ```
-5. Nuclei
+5. Nuclei (Default Scanning)
 ```
 subfinder -dL root.txt -all -silent -o subs.txt
 naabu -l subs.txt -s s -tp 100 -ec -c 50 -o naabu.txt
@@ -50,3 +50,8 @@ nuclei -l alive_http_services.txt -itags config,exposure -etags ssl,tls,headers 
 python nuclei.py nuclei.txt # Open Nuclei_Report.html
 ```
 ![image](https://github.com/user-attachments/assets/87592c4f-ba72-4ad0-a941-ea00ff40b16e)
+6. Nuclei (Fast Custom Templates)
+```
+git clone https://github.com/reewardius/nuclei-fast-templates && cd nuclei-fast-templates
+katana -u root.txt -ps -f qurl -o passive.txt && uro -i passive.txt -o dedupe.txt && nuclei -l dedupe.txt -tags fuzzing-req -dast -t nuclei-fast-templates/ -o nuclei-dast-fast-templates-results.txt
+```
