@@ -50,6 +50,7 @@ chmod +x par.sh && bash par.sh
 python nuclei.py nuclei.txt # Open Nuclei_Report.html
 ```
 ![image](https://github.com/user-attachments/assets/87592c4f-ba72-4ad0-a941-ea00ff40b16e)
+
 6. Nuclei (Fast Custom Templates)
 ```
 git clone https://github.com/reewardius/nuclei-fast-templates && cd nuclei-fast-templates
