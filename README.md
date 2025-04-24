@@ -43,7 +43,10 @@ Expected Output
 ```
 5. Nuclei
 ```
-nuclei -l targets.txt -itags config,exposure -etags ssl,tls,headers -es unknown -rl 1000 -c 100 -o nuclei.txt
+subfinder -dL root.txt -all -silent -o subs.txt
+naabu -l subs.txt -s s -tp 100 -ec -c 50 -o naabu.txt
+httpx -l naabu.txt -rl 500 -t 200 -o alive_http_services.txt
+nuclei -l alive_http_services.txt -itags config,exposure -etags ssl,tls,headers -es unknown -rl 1000 -c 100 -o nuclei.txt
 python nuclei.py nuclei.txt # Open Nuclei_Report.html
 ```
 ![image](https://github.com/user-attachments/assets/87592c4f-ba72-4ad0-a941-ea00ff40b16e)
