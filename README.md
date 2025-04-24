@@ -20,7 +20,7 @@ httpx -l juicypath_matches.txt -mc 200 -o juicypath.txt
 ```
 subfinder -dL root.txt -all -silent -o subs.txt
 python links.py
-nuclei -l domains_output/full.txt -profile subdomain-takeovers -duc -nh
+nuclei -l domains_output/full.txt -profile subdomain-takeovers -nh
 ```
 
 4. Slicer
