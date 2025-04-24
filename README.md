@@ -41,3 +41,9 @@ Expected Output
 ✓ Extracted 92 unique paths at depth 4
 → Saved to: slicer4.txt
 ```
+5. Nuclei
+```
+nuclei -l targets.txt -itags config,exposure -es unknown -rl 1000 -c 100 -o nuclei.txt
+python nuclei.py nuclei.txt # Open Nuclei_Report.html
+```
+![image](https://github.com/user-attachments/assets/87592c4f-ba72-4ad0-a941-ea00ff40b16e)
