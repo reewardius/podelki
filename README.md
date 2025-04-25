@@ -2,7 +2,7 @@
 
 1. ffuf minimize FP
 ```
-ffuf -u URL/TOP -w domains.txt:URL -w top.txt:TOP -ac -mc 200 -o fuzz_results.json -fs 0
+ffuf -u URL/TOP -w domains.txt:URL -w top.txt:TOP -t 1000 -ac -mc 200 -o fuzz_results.json -fs 0
 python delete_falsepositives.py -j fuzz_results.json -o fuzz_output.txt -fp fp_domains.txt
 httpx -l fp_domains.txt -rl 500 -o alive.txt
 nuclei -l alive.txt -tags config,exposure -es unknown -c 100 -rl 1000 -o config_exposures.txt
