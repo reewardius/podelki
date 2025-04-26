@@ -1,6 +1,7 @@
 import re
 import sys
 import os
+import html
 from collections import defaultdict
 from datetime import datetime
 
@@ -49,12 +50,12 @@ def generate_html_report(vulnerabilities, input_filename):
     
     # HTML шаблон
     report_title = os.path.splitext(os.path.basename(input_filename))[0]
-    html = f"""<!DOCTYPE html>
+    html_output = f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отчет по уязвимостям: {report_title}</title>
+    <title>Отчет по уязвимостям: {html.escape(report_title)}</title>
     <style>
         body {{
             font-family: Arial, sans-serif;
@@ -201,7 +202,7 @@ def generate_html_report(vulnerabilities, input_filename):
 <body>
     <div class="container">
         <h1>Отчет по уязвимостям</h1>
-        <div class="source-file">Исходный файл: {input_filename}</div>
+        <div class="source-file">Исходный файл: {html.escape(input_filename)}</div>
         
         <div class="summary">
             <h3>Сводная информация</h3>
@@ -239,7 +240,7 @@ def generate_html_report(vulnerabilities, input_filename):
 """
 
     if not vulnerabilities:
-        html += """
+        html_output += """
         <div class="no-vulns">
             <p>В отчете не найдено уязвимостей. Проверьте формат входного файла.</p>
         </div>
@@ -252,7 +253,7 @@ def generate_html_report(vulnerabilities, input_filename):
                 continue
                 
             severity_display = severity_name.upper()
-            html += f"""
+            html_output += f"""
             <div class="{severity_name}">
                 <h2>{severity_display} ({len(vulns)})</h2>
                 <table class="vuln-table">
@@ -268,24 +269,29 @@ def generate_html_report(vulnerabilities, input_filename):
     """
 
             for vuln in vulns:
+                # Экранируем значения для безопасной вставки в HTML
+                cve_escaped = html.escape(vuln["cve_or_type"])
+                protocol_escaped = html.escape(vuln["protocol"])
+                url_escaped = html.escape(vuln["url"])
+                
                 # Формируем ячейку с extractors, если они есть
                 extractors_html = ""
                 if vuln["extractors"]:
                     extractors_html = '<div class="extractors-cell">'
                     for extractor in vuln["extractors"]:
-                        extractors_html += f'<span class="extractor">{extractor}</span> '
+                        extractors_html += f'<span class="extractor">{html.escape(extractor)}</span> '
                     extractors_html += '</div>'
                 
-                html += f"""
+                html_output += f"""
                         <tr>
-                            <td>{vuln["cve_or_type"]}</td>
-                            <td>{vuln["protocol"]}</td>
-                            <td class="vuln-url"><a href="{vuln["url"]}" target="_blank">{vuln["url"]}</a></td>
+                            <td>{cve_escaped}</td>
+                            <td>{protocol_escaped}</td>
+                            <td class="vuln-url"><a href="{url_escaped}" target="_blank">{url_escaped}</a></td>
                             <td>{extractors_html}</td>
                         </tr>
     """
 
-            html += """
+            html_output += """
                     </tbody>
                 </table>
             </div>
@@ -293,7 +299,7 @@ def generate_html_report(vulnerabilities, input_filename):
 
     # Завершаем HTML
     current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-    html += f"""
+    html_output += f"""
         <footer>
             Отчет сгенерирован: {current_date}
         </footer>
@@ -301,12 +307,12 @@ def generate_html_report(vulnerabilities, input_filename):
 </body>
 </html>
 """
-    return html
+    return html_output
 
 def main():
     # Проверяем, что файл указан в аргументах
     if len(sys.argv) != 2:
-        print("Использование: python script.py путь_к_файлу.txt")
+        print("Использование: python nuclei.py путь_к_файлу.txt")
         sys.exit(1)
     
     input_file = sys.argv[1]
