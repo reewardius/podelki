@@ -119,11 +119,14 @@ def generate_html_report(vulnerabilities, input_filename, additional_files=None)
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 30px;
+            table-layout: fixed; /* Фиксированный макет таблицы */
         }}
         .vuln-table th, .vuln-table td {{
             border: 1px solid #ddd;
             padding: 10px;
             text-align: left;
+            vertical-align: top;
+            overflow-wrap: break-word; /* Перенос длинных слов */
         }}
         .vuln-table th {{
             background-color: #f2f2f2;
@@ -131,6 +134,16 @@ def generate_html_report(vulnerabilities, input_filename, additional_files=None)
         .vuln-table tr:nth-child(even) {{
             background-color: #f9f9f9;
         }}
+        /* Ширина колонок в процентах */
+        .vuln-table th:nth-child(1), .vuln-table td:nth-child(1) {{ width: 20%; }}
+        .vuln-table th:nth-child(2), .vuln-table td:nth-child(2) {{ width: 10%; }}
+        .vuln-table th:nth-child(3), .vuln-table td:nth-child(3) {{ width: 45%; }}
+        .vuln-table th:nth-child(4), .vuln-table td:nth-child(4) {{ width: 25%; }}
+        
+        /* Для таблиц с двумя колонками (URL-результаты) */
+        .two-col-table th:nth-child(1), .two-col-table td:nth-child(1) {{ width: 10%; }}
+        .two-col-table th:nth-child(2), .two-col-table td:nth-child(2) {{ width: 90%; }}
+        
         .vuln-url {{
             word-break: break-all;
         }}
@@ -145,7 +158,10 @@ def generate_html_report(vulnerabilities, input_filename, additional_files=None)
             border: 1px solid #ddd;
         }}
         .extractors-cell {{
-            max-width: 300px;
+            max-width: 100%;
+            max-height: 150px; /* Ограничение высоты */
+            overflow-y: auto; /* Вертикальная прокрутка */
+            overflow-x: hidden; /* Скрываем горизонтальную прокрутку */
         }}
         .summary {{
             margin-bottom: 20px;
@@ -407,7 +423,7 @@ def generate_html_report(vulnerabilities, input_filename, additional_files=None)
         <div id="{tab_name}Tab" class="tabcontent">
             <div class="{file_type}">
                 <h2>{tab_title}</h2>
-                <table class="vuln-table">
+                <table class="vuln-table two-col-table">
                     <thead>
                         <tr>
                             <th>№</th>
