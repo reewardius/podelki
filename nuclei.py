@@ -117,7 +117,8 @@ def generate_html_report(vulnerabilities, input_filename, additional_files=None)
         
         .vuln-table {{
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate; /* Изменено для лучшей совместимости с прокруткой */
+            border-spacing: 0;
             margin-bottom: 30px;
             table-layout: fixed; /* Фиксированный макет таблицы */
         }}
@@ -138,7 +139,12 @@ def generate_html_report(vulnerabilities, input_filename, additional_files=None)
         .vuln-table th:nth-child(1), .vuln-table td:nth-child(1) {{ width: 20%; }}
         .vuln-table th:nth-child(2), .vuln-table td:nth-child(2) {{ width: 10%; }}
         .vuln-table th:nth-child(3), .vuln-table td:nth-child(3) {{ width: 45%; }}
-        .vuln-table th:nth-child(4), .vuln-table td:nth-child(4) {{ width: 25%; }}
+        .vuln-table th:nth-child(4), .vuln-table td:nth-child(4) {{ 
+            width: 25%; 
+            position: relative;
+            height: 100%;
+            padding: 0; /* Убираем отступы, чтобы скролл-контейнер занимал всю ячейку */
+        }}
         
         /* Для таблиц с двумя колонками (URL-результаты) */
         .two-col-table th:nth-child(1), .two-col-table td:nth-child(1) {{ width: 10%; }}
@@ -157,11 +163,22 @@ def generate_html_report(vulnerabilities, input_filename, additional_files=None)
             font-family: monospace;
             border: 1px solid #ddd;
         }}
+        /* Обновленные стили для контейнера с прокруткой */
+        .scroll-container {{
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            background-color: #fafafa;
+            display: block;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            border-radius: 3px;
+        }}
         .extractors-cell {{
-            max-width: 100%;
-            max-height: 150px; /* Ограничение высоты */
-            overflow-y: auto; /* Вертикальная прокрутка */
-            overflow-x: hidden; /* Скрываем горизонтальную прокрутку */
+            padding: 5px;
+            margin: 0;
         }}
         .summary {{
             margin-bottom: 20px;
@@ -384,13 +401,16 @@ def generate_html_report(vulnerabilities, input_filename, additional_files=None)
                 protocol_escaped = html.escape(vuln["protocol"])
                 url_escaped = html.escape(vuln["url"])
                 
-                # Формируем ячейку с extractors, если они есть
+                # Формируем ячейку с extractors в новом формате с гарантированной прокруткой
                 extractors_html = ""
                 if vuln["extractors"]:
-                    extractors_html = '<div class="extractors-cell">'
+                    extractors_html = '<div class="scroll-container"><div class="extractors-cell">'
                     for extractor in vuln["extractors"]:
                         extractors_html += f'<span class="extractor">{html.escape(extractor)}</span> '
-                    extractors_html += '</div>'
+                    extractors_html += '</div></div>'
+                else:
+                    # Даже если экстракторов нет, создаем пустой скролл-контейнер для единообразия
+                    extractors_html = '<div class="scroll-container"><div class="extractors-cell">-</div></div>'
                 
                 html_output += f"""
                             <tr>
@@ -449,7 +469,7 @@ def generate_html_report(vulnerabilities, input_filename, additional_files=None)
         </div>
 """
 
-    # JavaScript для вкладок
+    # JavaScript для вкладок и инициализации скроллов
     html_output += """
         <script>
         function openTab(evt, tabName) {
@@ -465,6 +485,19 @@ def generate_html_report(vulnerabilities, input_filename, additional_files=None)
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.className += " active";
         }
+        
+        // Проверка состояния прокрутки для всех контейнеров при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            var scrollContainers = document.querySelectorAll('.scroll-container');
+            scrollContainers.forEach(function(container) {
+                // Проверяем, нужен ли скролл
+                if (container.scrollHeight > container.clientHeight) {
+                    container.style.borderColor = '#ccc';
+                } else {
+                    container.style.borderColor = '#f0f0f0';
+                }
+            });
+        });
         </script>
 """
 
