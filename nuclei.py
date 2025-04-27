@@ -39,26 +39,29 @@ def parse_vulnerabilities(text):
     
     return vulns
 
-def parse_ffuf_output(ffuf_file_path):
-    """Парсит выходные данные ffuf из указанного файла"""
-    ffuf_results = []
+def parse_url_list_file(file_path):
+    """Парсит файл с URL-ами, по одному на строку"""
+    results = []
     
-    if not os.path.exists(ffuf_file_path):
-        print(f"Предупреждение: Файл результатов ffuf '{ffuf_file_path}' не найден.")
-        return ffuf_results
+    if not os.path.exists(file_path):
+        print(f"Предупреждение: Файл '{file_path}' не найден.")
+        return results
     
     try:
-        with open(ffuf_file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             for line in f:
                 url = line.strip()
                 if url and url.startswith(('http://', 'https://')):
-                    ffuf_results.append(url)
+                    results.append(url)
     except Exception as e:
-        print(f"Ошибка при чтении файла ffuf: {e}")
+        print(f"Ошибка при чтении файла {file_path}: {e}")
     
-    return ffuf_results
+    return results
 
-def generate_html_report(vulnerabilities, input_filename, ffuf_results=None):
+def generate_html_report(vulnerabilities, input_filename, additional_files=None):
+    if additional_files is None:
+        additional_files = {}
+    
     # Группировка уязвимостей по критичности
     severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4, "unknown": 5}
     vuln_by_severity = defaultdict(list)
@@ -108,7 +111,9 @@ def generate_html_report(vulnerabilities, input_filename, ffuf_results=None):
         .low h2 {{ background-color: #2ecc71; }}
         .info h2 {{ background-color: #3498db; }}
         .unknown h2 {{ background-color: #95a5a6; }}
-        .ffuf h2 {{ background-color: #9b59b6; }} /* Пурпурный цвет для ffuf */
+        .ffuf h2 {{ background-color: #9b59b6; }}
+        .sensitive h2 {{ background-color: #8e44ad; }}
+        .juicypath h2 {{ background-color: #16a085; }}
         
         .vuln-table {{
             width: 100%;
@@ -292,12 +297,16 @@ def generate_html_report(vulnerabilities, input_filename, ffuf_results=None):
                 </tr>
 """
 
-    # Добавляем информацию о ffuf результатах, если они есть
-    if ffuf_results and len(ffuf_results) > 0:
-        html_output += f"""
+    # Добавляем информацию о дополнительных файлах в таблицу
+    for file_type, file_data in additional_files.items():
+        if file_data and len(file_data) > 0:
+            file_name = {"ffuf": "Ffuf находки", 
+                         "sensitive": "Sensitive находки", 
+                         "juicypath": "JuicyPath находки"}.get(file_type, file_type)
+            html_output += f"""
                 <tr>
-                    <td>Ffuf находки</td>
-                    <td>{len(ffuf_results)}</td>
+                    <td>{file_name}</td>
+                    <td>{len(file_data)}</td>
                 </tr>
 """
 
@@ -309,10 +318,14 @@ def generate_html_report(vulnerabilities, input_filename, ffuf_results=None):
             <button class="tablinks active" onclick="openTab(event, 'NucleiTab')">Nuclei</button>
 """
 
-    # Добавляем вкладку Ffuf только если есть результаты
-    if ffuf_results and len(ffuf_results) > 0:
-        html_output += """
-            <button class="tablinks" onclick="openTab(event, 'FfufTab')">Ffuf</button>
+    # Добавляем вкладки для дополнительных файлов, если они есть
+    for file_type, file_data in additional_files.items():
+        if file_data and len(file_data) > 0:
+            tab_name = {"ffuf": "Ffuf", 
+                        "sensitive": "Sensitive", 
+                        "juicypath": "JuicyPath"}.get(file_type, file_type.capitalize())
+            html_output += f"""
+            <button class="tablinks" onclick="openTab(event, '{file_type.capitalize()}Tab')">{tab_name}</button>
 """
 
     html_output += """
@@ -382,12 +395,18 @@ def generate_html_report(vulnerabilities, input_filename, ffuf_results=None):
         </div>
 """
 
-    # Добавляем содержимое вкладки Ffuf, если есть результаты
-    if ffuf_results and len(ffuf_results) > 0:
-        html_output += """
-        <div id="FfufTab" class="tabcontent">
-            <div class="ffuf">
-                <h2>FFUF РЕЗУЛЬТАТЫ</h2>
+    # Добавляем содержимое вкладок для дополнительных файлов
+    for file_type, file_data in additional_files.items():
+        if file_data and len(file_data) > 0:
+            tab_name = file_type.capitalize()
+            tab_title = {"ffuf": "FFUF РЕЗУЛЬТАТЫ", 
+                         "sensitive": "SENSITIVE РЕЗУЛЬТАТЫ", 
+                         "juicypath": "JUICYPATH РЕЗУЛЬТАТЫ"}.get(file_type, f"{file_type.upper()} РЕЗУЛЬТАТЫ")
+            
+            html_output += f"""
+        <div id="{tab_name}Tab" class="tabcontent">
+            <div class="{file_type}">
+                <h2>{tab_title}</h2>
                 <table class="vuln-table">
                     <thead>
                         <tr>
@@ -398,16 +417,16 @@ def generate_html_report(vulnerabilities, input_filename, ffuf_results=None):
                     <tbody>
 """
 
-        for i, url in enumerate(ffuf_results, 1):
-            url_escaped = html.escape(url)
-            html_output += f"""
+            for i, url in enumerate(file_data, 1):
+                url_escaped = html.escape(url)
+                html_output += f"""
                         <tr>
                             <td>{i}</td>
                             <td class="vuln-url"><a href="{url_escaped}" target="_blank">{url_escaped}</a></td>
                         </tr>
 """
 
-        html_output += """
+            html_output += """
                     </tbody>
                 </table>
             </div>
@@ -465,12 +484,30 @@ def main():
         
         vulnerabilities = parse_vulnerabilities(text)
         
-        # Проверяем наличие файла с результатами ffuf
-        ffuf_file = os.path.join(os.path.dirname(input_file), "fuzz_output.txt")
-        ffuf_results = parse_ffuf_output(ffuf_file)
+        # Собираем данные из дополнительных файлов
+        additional_files = {}
+        base_dir = os.path.dirname(input_file)
         
-        # Генерируем отчет с учетом результатов ffuf
-        html_report = generate_html_report(vulnerabilities, input_file, ffuf_results)
+        # Обрабатываем fuzz_output.txt
+        ffuf_file = os.path.join(base_dir, "fuzz_output.txt")
+        ffuf_results = parse_url_list_file(ffuf_file)
+        if ffuf_results:
+            additional_files["ffuf"] = ffuf_results
+        
+        # Обрабатываем sensitive.txt
+        sensitive_file = os.path.join(base_dir, "sensitive.txt")
+        sensitive_results = parse_url_list_file(sensitive_file)
+        if sensitive_results:
+            additional_files["sensitive"] = sensitive_results
+        
+        # Обрабатываем juicypath.txt
+        juicypath_file = os.path.join(base_dir, "juicypath.txt")
+        juicypath_results = parse_url_list_file(juicypath_file)
+        if juicypath_results:
+            additional_files["juicypath"] = juicypath_results
+        
+        # Генерируем отчет с учетом всех дополнительных файлов
+        html_report = generate_html_report(vulnerabilities, input_file, additional_files)
         
         # Формируем имя выходного файла
         output_file = os.path.splitext(input_file)[0] + "_report.html"
@@ -481,8 +518,10 @@ def main():
         
         print(f"Отчет успешно сгенерирован и сохранен в файл: {output_file}")
         print(f"Всего обработано уязвимостей Nuclei: {len(vulnerabilities)}")
-        if ffuf_results:
-            print(f"Всего обработано результатов Ffuf: {len(ffuf_results)}")
+        
+        # Выводим информацию о дополнительных файлах
+        for file_type, results in additional_files.items():
+            print(f"Всего обработано результатов {file_type.capitalize()}: {len(results)}")
         
     except Exception as e:
         print(f"Ошибка при обработке файла: {e}")
