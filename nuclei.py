@@ -39,7 +39,26 @@ def parse_vulnerabilities(text):
     
     return vulns
 
-def generate_html_report(vulnerabilities, input_filename):
+def parse_ffuf_output(ffuf_file_path):
+    """Парсит выходные данные ffuf из указанного файла"""
+    ffuf_results = []
+    
+    if not os.path.exists(ffuf_file_path):
+        print(f"Предупреждение: Файл результатов ffuf '{ffuf_file_path}' не найден.")
+        return ffuf_results
+    
+    try:
+        with open(ffuf_file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                url = line.strip()
+                if url and url.startswith(('http://', 'https://')):
+                    ffuf_results.append(url)
+    except Exception as e:
+        print(f"Ошибка при чтении файла ffuf: {e}")
+    
+    return ffuf_results
+
+def generate_html_report(vulnerabilities, input_filename, ffuf_results=None):
     # Группировка уязвимостей по критичности
     severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4, "unknown": 5}
     vuln_by_severity = defaultdict(list)
@@ -89,6 +108,7 @@ def generate_html_report(vulnerabilities, input_filename):
         .low h2 {{ background-color: #2ecc71; }}
         .info h2 {{ background-color: #3498db; }}
         .unknown h2 {{ background-color: #95a5a6; }}
+        .ffuf h2 {{ background-color: #9b59b6; }} /* Пурпурный цвет для ffuf */
         
         .vuln-table {{
             width: 100%;
@@ -197,6 +217,41 @@ def generate_html_report(vulnerabilities, input_filename):
             visibility: visible;
             opacity: 1;
         }}
+        .tab {{
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 5px 5px 0 0;
+        }}
+        .tab button {{
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }}
+        .tab button:hover {{
+            background-color: #ddd;
+        }}
+        .tab button.active {{
+            background-color: #3498db;
+            color: white;
+        }}
+        .tabcontent {{
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            animation: fadeEffect 1s;
+        }}
+        @keyframes fadeEffect {{
+            from {{opacity: 0;}}
+            to {{opacity: 1;}}
+        }}
     </style>
 </head>
 <body>
@@ -235,15 +290,42 @@ def generate_html_report(vulnerabilities, input_filename):
                     <td>Всего</td>
                     <td>{len(vulnerabilities)}</td>
                 </tr>
+"""
+
+    # Добавляем информацию о ffuf результатах, если они есть
+    if ffuf_results and len(ffuf_results) > 0:
+        html_output += f"""
+                <tr>
+                    <td>Ffuf находки</td>
+                    <td>{len(ffuf_results)}</td>
+                </tr>
+"""
+
+    html_output += """
             </table>
         </div>
+        
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'NucleiTab')">Nuclei</button>
+"""
+
+    # Добавляем вкладку Ffuf только если есть результаты
+    if ffuf_results and len(ffuf_results) > 0:
+        html_output += """
+            <button class="tablinks" onclick="openTab(event, 'FfufTab')">Ffuf</button>
+"""
+
+    html_output += """
+        </div>
+        
+        <div id="NucleiTab" class="tabcontent" style="display: block;">
 """
 
     if not vulnerabilities:
         html_output += """
-        <div class="no-vulns">
-            <p>В отчете не найдено уязвимостей. Проверьте формат входного файла.</p>
-        </div>
+            <div class="no-vulns">
+                <p>В отчете не найдено уязвимостей. Проверьте формат входного файла.</p>
+            </div>
         """
     else:
         # Добавляем секции по уровням критичности в нужном порядке
@@ -254,20 +336,19 @@ def generate_html_report(vulnerabilities, input_filename):
                 
             severity_display = severity_name.upper()
             html_output += f"""
-            <div class="{severity_name}">
-                <h2>{severity_display} ({len(vulns)})</h2>
-                <table class="vuln-table">
-                    <thead>
-                        <tr>
-                            <th>CVE/Тип</th>
-                            <th>Протокол</th>
-                            <th>URL</th>
-                            <th>Дополнительная информация</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-    """
-
+                <div class="{severity_name}">
+                    <h2>{severity_display} ({len(vulns)})</h2>
+                    <table class="vuln-table">
+                        <thead>
+                            <tr>
+                                <th>CVE/Тип</th>
+                                <th>Протокол</th>
+                                <th>URL</th>
+                                <th>Дополнительная информация</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+"""
             for vuln in vulns:
                 # Экранируем значения для безопасной вставки в HTML
                 cve_escaped = html.escape(vuln["cve_or_type"])
@@ -283,19 +364,74 @@ def generate_html_report(vulnerabilities, input_filename):
                     extractors_html += '</div>'
                 
                 html_output += f"""
-                        <tr>
-                            <td>{cve_escaped}</td>
-                            <td>{protocol_escaped}</td>
-                            <td class="vuln-url"><a href="{url_escaped}" target="_blank">{url_escaped}</a></td>
-                            <td>{extractors_html}</td>
-                        </tr>
-    """
+                            <tr>
+                                <td>{cve_escaped}</td>
+                                <td>{protocol_escaped}</td>
+                                <td class="vuln-url"><a href="{url_escaped}" target="_blank">{url_escaped}</a></td>
+                                <td>{extractors_html}</td>
+                            </tr>
+"""
 
             html_output += """
+                        </tbody>
+                    </table>
+                </div>
+"""
+
+    html_output += """
+        </div>
+"""
+
+    # Добавляем содержимое вкладки Ffuf, если есть результаты
+    if ffuf_results and len(ffuf_results) > 0:
+        html_output += """
+        <div id="FfufTab" class="tabcontent">
+            <div class="ffuf">
+                <h2>FFUF РЕЗУЛЬТАТЫ</h2>
+                <table class="vuln-table">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>URL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+"""
+
+        for i, url in enumerate(ffuf_results, 1):
+            url_escaped = html.escape(url)
+            html_output += f"""
+                        <tr>
+                            <td>{i}</td>
+                            <td class="vuln-url"><a href="{url_escaped}" target="_blank">{url_escaped}</a></td>
+                        </tr>
+"""
+
+        html_output += """
                     </tbody>
                 </table>
             </div>
-    """
+        </div>
+"""
+
+    # JavaScript для вкладок
+    html_output += """
+        <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        </script>
+"""
 
     # Завершаем HTML
     current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
@@ -328,7 +464,13 @@ def main():
             text = f.read()
         
         vulnerabilities = parse_vulnerabilities(text)
-        html_report = generate_html_report(vulnerabilities, input_file)
+        
+        # Проверяем наличие файла с результатами ffuf
+        ffuf_file = os.path.join(os.path.dirname(input_file), "fuzz_output.txt")
+        ffuf_results = parse_ffuf_output(ffuf_file)
+        
+        # Генерируем отчет с учетом результатов ffuf
+        html_report = generate_html_report(vulnerabilities, input_file, ffuf_results)
         
         # Формируем имя выходного файла
         output_file = os.path.splitext(input_file)[0] + "_report.html"
@@ -338,7 +480,9 @@ def main():
             f.write(html_report)
         
         print(f"Отчет успешно сгенерирован и сохранен в файл: {output_file}")
-        print(f"Всего обработано уязвимостей: {len(vulnerabilities)}")
+        print(f"Всего обработано уязвимостей Nuclei: {len(vulnerabilities)}")
+        if ffuf_results:
+            print(f"Всего обработано результатов Ffuf: {len(ffuf_results)}")
         
     except Exception as e:
         print(f"Ошибка при обработке файла: {e}")
